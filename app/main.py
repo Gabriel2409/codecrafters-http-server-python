@@ -1,4 +1,5 @@
 import socket
+from .http import HttpResponse, HttpStatus, HttpVersion
 
 
 def main():
@@ -10,9 +11,12 @@ def main():
     with socket.create_server(("localhost", 4221), reuse_port=True) as server_socket:
         while True:
             conn, address = server_socket.accept()
-            res = b"HTTP/1.1 200 OK\r\n\r\n"
-            print(res)
-            conn.sendall(res)
+            with conn:
+                req = conn.recv(1024)
+                print(req.decode())
+
+                res = HttpResponse(version=HttpVersion.V1_1, status=HttpStatus.Ok200)
+                conn.sendall(res.to_bytes())
 
 
 if __name__ == "__main__":
