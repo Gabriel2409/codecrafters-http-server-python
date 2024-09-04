@@ -1,0 +1,10 @@
+[project]
+name = "codecrafters-http-server-python"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["lark~=1.1", "pyparsing~=3.0"]
+
+[tool.uv]
+dev-dependencies = ["watchdog>=5.0.2"]

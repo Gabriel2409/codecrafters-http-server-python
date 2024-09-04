@@ -7,14 +7,14 @@ help:
 	@echo "  - watch: Launches the app with change detection"
 
 req:
-	pipenv requirements --dev | uv pip compile --generate-hashes -o requirements.txt -
+	pipenv requirements --dev | uv pip compile  -o requirements.txt -
 venv:
 	uv venv
 sync:
 	uv pip sync requirements.txt
 run:
-	.venv/bin/python -m app.main
+	uv run -- python -m app.main
 watch: 
-	.venv/bin/watchmedo auto-restart -p '*.py' -R  -- .venv/bin/python -m app.main
+	uv run -- watchmedo auto-restart -p '*.py' -R  -- python -m app.main
 
 
