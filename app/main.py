@@ -1,5 +1,36 @@
 import socket
-from app.http import HttpResponse, HttpStatus, HttpVersion
+
+from pyparsing import alphanums
+from app.http import HttpRequest, HttpResponse, HttpStatus, HttpVersion, HttpMethod
+
+
+def receive_msg(conn: socket.socket, buf_len: int = 1024):
+    chunks = []
+
+    try:
+        while True:
+            chunk = conn.recv(buf_len)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            if len(chunk) < buf_len:
+                break
+    except socket.error as e:
+        print(f"Socket error while receiving: {e}")
+
+    return b"".join(chunks)
+
+
+def send_msg(conn: socket.socket, msg: bytes):
+    total_sent = 0
+    msg_len = len(msg)
+
+    try:
+        while total_sent < msg_len:
+            sent = conn.send(msg[total_sent:])
+            total_sent += sent
+    except socket.error as e:
+        print(f"Socket error while sending: {e}")
 
 
 def main():
@@ -12,11 +43,20 @@ def main():
         while True:
             conn, address = server_socket.accept()
             with conn:
-                req = conn.recv(1024)
-                print(req.decode())
+                msg = receive_msg(conn=conn)
+                req = HttpRequest.from_bytes(msg)
 
-                res = HttpResponse(version=HttpVersion.V1_1, status=HttpStatus.Ok200)
-                conn.sendall(res.to_bytes())
+                match req.path:
+                    case "/":
+                        res = HttpResponse(
+                            version=HttpVersion.V1_1, status=HttpStatus.Ok200
+                        )
+                    case _:
+                        res = HttpResponse(
+                            version=HttpVersion.V1_1, status=HttpStatus.NotFound404
+                        )
+
+                send_msg(conn=conn, msg=res.to_bytes())
 
 
 if __name__ == "__main__":
