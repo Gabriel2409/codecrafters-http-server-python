@@ -1,5 +1,5 @@
 import socket
-from .http import HttpResponse, HttpStatus, HttpVersion
+from app.http import HttpResponse, HttpStatus, HttpVersion
 
 
 def main():

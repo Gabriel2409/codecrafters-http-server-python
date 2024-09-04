@@ -17,6 +17,11 @@ class HttpStatus(Enum):
     InternalServerError500 = "500 Internal Server Error"
 
 
+class HttpRequest:
+    def __init__(self):
+        pass
+
+
 class HttpResponse:
     def __init__(self, version: HttpVersion, status: HttpStatus):
         self.version = version

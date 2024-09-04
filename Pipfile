@@ -15,7 +15,8 @@ name = "pypi"
 pyparsing = "~=3.0"
 lark = "~=1.1"
 
-[dev-packages]
-
 [requires]
 python_version = "3"
+
+[dev-packages]
+watchdog = {extras = ["watchmedo"], version = "*"}
