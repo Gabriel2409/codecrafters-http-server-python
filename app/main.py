@@ -46,6 +46,7 @@ def main():
                 msg = receive_msg(conn=conn)
                 print(msg.decode())
                 req = HttpRequest.from_bytes(msg)
+                print(req.path)
 
                 match req.path:
                     case "/":

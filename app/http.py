@@ -1,4 +1,6 @@
+from typing import Dict
 from app.errors import CantParseRequest
+from app.parser import method_parser, urlpath_parser, version_parser
 
 from enum import Enum
 from pyparsing import (
@@ -32,33 +34,51 @@ class HttpStatus(Enum):
     InternalServerError500 = "500 Internal Server Error"
 
 
+class HttpUrlPath:
+    def __init__(self, host: str | None, path: str, query_params: Dict[str, str]):
+        self.host = host
+        self.path = path
+        self.query_params = query_params
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(host={self.host}, path={self.path}, query_params={self.query_params})"
+
+
 class HttpRequest:
-    def __init__(self, method: HttpMethod, path: str, version: HttpVersion):
+    def __init__(self, method: HttpMethod, path: HttpUrlPath, version: HttpVersion):
         self.method = method
         self.path = path
         self.version = version
 
     @classmethod
     def from_bytes(cls, msg: bytes):
-        method_parser = Word(alphas)
-        path_parser = Combine(Literal("/") + Optional(Word(alphanums + "/?=&")))
-        http_version_parser = Combine(Literal("HTTP/") + Word("1.0 1.1 2.0"))
-        request_line = (
-            method_parser("method")
-            + path_parser("path")
-            + http_version_parser("http_version")
-        )
+        request_line = method_parser() + urlpath_parser() + version_parser()
         try:
-            result = request_line.parseString(msg.decode())
+            result = request_line.parseString(msg.decode()).as_dict()
         except ParseException:
+            raise
             raise CantParseRequest
 
         try:
             method = HttpMethod(result.method)
+
+            query_params = {}
+            if "query_params" in result:
+                for query_param in result["query_params"]:
+                    key, val = query_param.split("=")
+                    query_params[key] = val
+
+            urlpath = HttpUrlPath(
+                host=result.get("host"),
+                path=result.get("path") or "",
+                query_params=query_params,
+            )
+
             version = HttpVersion(result.http_version)
+
         except ValueError:
             raise CantParseRequest
-        return cls(method=method, path=result.path, version=version)
+        return cls(method=method, path=urlpath, version=version)
 
 
 class HttpResponse:
