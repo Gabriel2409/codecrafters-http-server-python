@@ -20,3 +20,4 @@ python_version = "3"
 
 [dev-packages]
 watchdog = {extras = ["watchmedo"], version = "*"}
+pytest = "~=8.3.2"

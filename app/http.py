@@ -15,6 +15,8 @@ from pyparsing import (
 class HttpMethod(Enum):
     GET = "GET"
     POST = "POST"
+    DELETE = "DELETE"
+    PUT = "PUT"
 
 
 class HttpVersion(Enum):

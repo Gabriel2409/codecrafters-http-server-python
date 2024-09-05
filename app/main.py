@@ -44,6 +44,7 @@ def main():
             conn, address = server_socket.accept()
             with conn:
                 msg = receive_msg(conn=conn)
+                print(msg.decode())
                 req = HttpRequest.from_bytes(msg)
 
                 match req.path:
