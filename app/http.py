@@ -164,7 +164,7 @@ class HttpResponse:
         version: HttpVersion = HttpVersion.V1_1,
         status: HttpStatus = HttpStatus.Ok200,
         content: str = "",
-        content_type: str = "text-plain",
+        content_type: str = "text/plain",
     ) -> Self:
         content_len = len(content)
         body = HttpBody(content)
