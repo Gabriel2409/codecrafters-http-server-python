@@ -44,18 +44,19 @@ class HttpUrlPath:
 
 
 HttpHeaders = dict
+HttpBody = str
 
 
 class HttpRequest:
     def __init__(
         self,
         method: HttpMethod,
-        path: HttpUrlPath,
+        urlpath: HttpUrlPath,
         version: HttpVersion,
         headers: HttpHeaders,
     ):
         self.method = method
-        self.path = path
+        self.urlpath = urlpath
         self.version = version
         self.headers = headers
 
@@ -92,13 +93,13 @@ class HttpRequest:
 
         except ValueError:
             raise
-        return cls(method=method, path=urlpath, version=version, headers=headers)
+        return cls(method=method, urlpath=urlpath, version=version, headers=headers)
 
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
             f"method={self.method},"
-            f"path={self.path},"
+            f"urlpath={self.urlpath},"
             f"version={self.version},"
             f"headers={self.headers},"
             ")"
@@ -106,30 +107,54 @@ class HttpRequest:
 
 
 class HttpResponse:
-    def __init__(self, version: HttpVersion, status: HttpStatus, headers: HttpHeaders):
+    def __init__(
+        self,
+        version: HttpVersion,
+        status: HttpStatus,
+        headers: HttpHeaders,
+        body: HttpBody,
+    ):
         self.version = version
         self.status = status
         self.headers = headers
+        self.body = body
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"version={self.version},"
+            f"status={self.status},"
+            f"headers={self.headers},"
+            f"body={self.body},"
+            ")"
+        )
 
     def to_bytes(self) -> bytes:
         res = f"{self.version.value} {self.status.value}\r\n"
 
         for key, val in self.headers.items():
-            res += f"{key}:{val}\r\n"
+            res += f"{key}: {val}\r\n"
 
         res += "\r\n"
+        if self.body:
+            res += self.body
 
-        res += "Content-Length:0\r\n\r\n"
         return res.encode()
 
     @classmethod
-    def empty(
+    def basic_content(
         cls,
         version: HttpVersion = HttpVersion.V1_0,
         status: HttpStatus = HttpStatus.Ok200,
+        content: str = "",
     ) -> Self:
+        content_len = len(content)
+        body = HttpBody(content)
+        print(body)
+
         return cls(
             version=version,
             status=status,
-            headers={"Content-Length": "0"},
+            headers={"Content-Length": str(content_len)},
+            body=body,
         )

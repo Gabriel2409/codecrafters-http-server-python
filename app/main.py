@@ -46,11 +46,17 @@ def main():
                 msg = receive_msg(conn=conn)
                 req = HttpRequest.from_bytes(msg)
 
-                match req.path:
-                    case "/":
-                        res = HttpResponse.empty(status=HttpStatus.Ok200)
+                print(req.urlpath.path)
+                match req.urlpath.path:
+                    case "":
+                        res = HttpResponse.basic_content(status=HttpStatus.Ok200)
+                    case x if x.startswith("echo/"):
+                        print(x)
+                        res = HttpResponse.basic_content(
+                            status=HttpStatus.Ok200, content=x[5:]
+                        )
                     case _:
-                        res = HttpResponse.empty(status=HttpStatus.NotFound404)
+                        res = HttpResponse.basic_content(status=HttpStatus.NotFound404)
 
                 send_msg(conn=conn, msg=res.to_bytes())
 
