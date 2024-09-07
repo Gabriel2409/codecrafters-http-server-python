@@ -50,8 +50,14 @@ def main():
                 match req.urlpath.path:
                     case "":
                         res = HttpResponse.empty(status=HttpStatus.Ok200)
+
+                    case "user-agent":
+                        user_agent = req.headers.get("User-Agent", "")
+                        res = HttpResponse.text_content(
+                            status=HttpStatus.Ok200, content=user_agent
+                        )
+
                     case x if x.startswith("echo/"):
-                        print(x)
                         res = HttpResponse.text_content(
                             status=HttpStatus.Ok200, content=x[5:]
                         )
