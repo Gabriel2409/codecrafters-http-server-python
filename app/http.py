@@ -142,7 +142,20 @@ class HttpResponse:
         return res.encode()
 
     @classmethod
-    def basic_content(
+    def empty(
+        cls,
+        version: HttpVersion = HttpVersion.V1_1,
+        status: HttpStatus = HttpStatus.Ok200,
+    ) -> Self:
+        return cls(
+            version=version,
+            status=status,
+            headers={"Content-Length": "0"},
+            body="",
+        )
+
+    @classmethod
+    def text_content(
         cls,
         version: HttpVersion = HttpVersion.V1_1,
         status: HttpStatus = HttpStatus.Ok200,
@@ -155,6 +168,6 @@ class HttpResponse:
         return cls(
             version=version,
             status=status,
-            headers={"Content-Length": str(content_len)},
+            headers={"Content-Type": "text/plain", "Content-Length": str(content_len)},
             body=body,
         )
