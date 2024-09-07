@@ -72,7 +72,16 @@ async def handle_connection_with_asyncio():
 
 
 def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
+    """Launches tcp server
+    Current benchmark with `oha -n 100 --burst-delay 2ms --burst-rate 4 http://localhost:4221`
+    - handle_connection_with_multiprocessing_pool() -> 93/100
+    - handle_connection_with_multithreading_naive() -> 83/100
+    - handle_connection_with_thread_pool() -> 83/100
+    - asyncio.run(handle_connection_with_asyncio()) -> 68/100
+
+    Note: Benchmark in the rust implementation: 100/100
+    """
+
     print("Logs from your program will appear here!")
 
     # Uncomment this to pass the first stage
