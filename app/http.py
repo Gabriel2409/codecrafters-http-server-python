@@ -164,6 +164,7 @@ class HttpResponse:
         version: HttpVersion = HttpVersion.V1_1,
         status: HttpStatus = HttpStatus.Ok200,
         content: str = "",
+        content_type: str = "text-plain",
     ) -> Self:
         content_len = len(content)
         body = HttpBody(content)
@@ -172,6 +173,6 @@ class HttpResponse:
         return cls(
             version=version,
             status=status,
-            headers={"Content-Type": "text/plain", "Content-Length": str(content_len)},
+            headers={"Content-Type": content_type, "Content-Length": str(content_len)},
             body=body,
         )

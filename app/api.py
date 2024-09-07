@@ -24,7 +24,9 @@ def handle_req(req: HttpRequest, directory: str | None) -> HttpResponse:
                     with open(filepath, "r") as f:
                         content = f.read()
                     res = HttpResponse.text_content(
-                        status=HttpStatus.Ok200, content=content
+                        status=HttpStatus.Ok200,
+                        content=content,
+                        content_type="octet/stream",
                     )
                 else:
                     res = HttpResponse.empty(status=HttpStatus.NotFound404)
