@@ -144,7 +144,7 @@ class HttpResponse:
     @classmethod
     def basic_content(
         cls,
-        version: HttpVersion = HttpVersion.V1_0,
+        version: HttpVersion = HttpVersion.V1_1,
         status: HttpStatus = HttpStatus.Ok200,
         content: str = "",
     ) -> Self:
