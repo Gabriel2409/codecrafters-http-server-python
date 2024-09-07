@@ -1,3 +1,5 @@
+import gzip
+from io import BytesIO
 from typing import Dict, Self
 from app.parser import (
     body_parser,
@@ -8,15 +10,7 @@ from app.parser import (
 )
 
 from enum import Enum
-from pyparsing import (
-    Word,
-    alphas,
-    alphanums,
-    Combine,
-    Literal,
-    Optional,
-    ParseException,
-)
+from pyparsing import Optional, ParseException
 
 
 class HttpMethod(Enum):
@@ -51,7 +45,7 @@ class HttpUrlPath:
 
 
 HttpHeaders = dict
-HttpBody = str
+HttpBody = str | bytes
 
 
 class HttpRequest:
@@ -104,7 +98,7 @@ class HttpRequest:
             # \r\n
 
             headers = HttpHeaders(result.get("headers", {}))
-            body = HttpBody(result.get("body", ""))
+            body: str = result.get("body", "")
 
         except ValueError:
             raise
@@ -147,16 +141,23 @@ class HttpResponse:
         )
 
     def to_bytes(self) -> bytes:
-        res = f"{self.version.value} {self.status.value}\r\n"
+        res: str = f"{self.version.value} {self.status.value}\r\n"
 
         for key, val in self.headers.items():
             res += f"{key}: {val}\r\n"
 
         res += "\r\n"
-        if self.body:
-            res += self.body
 
-        return res.encode()
+        if self.body:
+            if isinstance(self.body, bytes):
+                return res.encode() + self.body
+            elif isinstance(self.body, str):
+                res += self.body
+                return res.encode()
+            else:
+                return res.encode()
+        else:
+            return res.encode()
 
     @classmethod
     def empty(
@@ -181,11 +182,13 @@ class HttpResponse:
         content_encoding: str | None = None,
     ) -> Self:
         content_len = len(content)
-        body = HttpBody(content)
-
+        body = content
         headers = {"Content-Type": content_type, "Content-Length": str(content_len)}
+
         if content_encoding == "gzip":
             headers["Content-Encoding"] = "gzip"
+            body = gzip.compress(content.encode(), compresslevel=6)
+            headers["Content-Length"] = str(len(body))
         return cls(
             version=version,
             status=status,
