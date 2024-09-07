@@ -75,7 +75,9 @@ def test_headers_parser():
 
 
 def test_combination_parser():
-    comb_parser = method_parser() + urlpath_parser() + version_parser()
+    comb_parser = (
+        method_parser() + urlpath_parser() + version_parser() + headers_parser()
+    )
     msg = """GET / HTTP/1.1
 Host: localhost:4221
 User-Agent: curl/8.9.1

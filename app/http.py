@@ -65,11 +65,15 @@ class HttpRequest:
         msg = msg_bytes.decode()
 
         request_line = (
-            method_parser() + urlpath_parser() + version_parser() + headers_parser()
+            method_parser()
+            + urlpath_parser()
+            + version_parser()
+            + Optional(headers_parser())
         )
         try:
             result = request_line.parse_string(msg).as_dict()
         except ParseException:
+            print(msg)
             raise
 
         try:

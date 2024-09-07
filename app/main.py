@@ -1,6 +1,6 @@
+import multiprocessing
 import socket
 
-from pyparsing import alphanums
 from app.http import HttpRequest, HttpResponse, HttpStatus, HttpVersion, HttpMethod
 
 
@@ -33,6 +33,29 @@ def send_msg(conn: socket.socket, msg: bytes):
         print(f"Socket error while sending: {e}")
 
 
+def handle_connection(conn: socket.socket):
+    with conn:
+        msg = receive_msg(conn=conn)
+        req = HttpRequest.from_bytes(msg)
+
+        match req.urlpath.path:
+            case "":
+                res = HttpResponse.empty(status=HttpStatus.Ok200)
+
+            case "user-agent":
+                user_agent = req.headers.get("User-Agent", "")
+                res = HttpResponse.text_content(
+                    status=HttpStatus.Ok200, content=user_agent
+                )
+
+            case x if x.startswith("echo/"):
+                res = HttpResponse.text_content(status=HttpStatus.Ok200, content=x[5:])
+            case _:
+                res = HttpResponse.empty(status=HttpStatus.NotFound404)
+
+        send_msg(conn=conn, msg=res.to_bytes())
+
+
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
@@ -40,31 +63,13 @@ def main():
     # Uncomment this to pass the first stage
 
     with socket.create_server(("localhost", 4221), reuse_port=True) as server_socket:
-        while True:
-            conn, address = server_socket.accept()
-            with conn:
-                msg = receive_msg(conn=conn)
-                req = HttpRequest.from_bytes(msg)
+        pool = multiprocessing.Pool(processes=4)
 
-                print(req.urlpath.path)
-                match req.urlpath.path:
-                    case "":
-                        res = HttpResponse.empty(status=HttpStatus.Ok200)
-
-                    case "user-agent":
-                        user_agent = req.headers.get("User-Agent", "")
-                        res = HttpResponse.text_content(
-                            status=HttpStatus.Ok200, content=user_agent
-                        )
-
-                    case x if x.startswith("echo/"):
-                        res = HttpResponse.text_content(
-                            status=HttpStatus.Ok200, content=x[5:]
-                        )
-                    case _:
-                        res = HttpResponse.empty(status=HttpStatus.NotFound404)
-
-                send_msg(conn=conn, msg=res.to_bytes())
+        with pool:
+            while True:
+                conn, address = server_socket.accept()
+                # handle_connection(conn)
+                pool.apply_async(handle_connection, (conn,))
 
 
 if __name__ == "__main__":
