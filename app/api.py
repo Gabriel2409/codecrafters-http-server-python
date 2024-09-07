@@ -13,7 +13,7 @@ def handle_req(req: HttpRequest, directory: str | None) -> HttpResponse:
 
 
 def handle_get_req(req: HttpRequest, directory: str | None) -> HttpResponse:
-    accepted_encodings = req.headers.get("Accept-Encoding", "").split(",")
+    accepted_encodings = req.headers.get("Accept-Encoding", "").split(", ")
 
     if "gzip" in accepted_encodings:
         content_encoding = "gzip"

@@ -97,9 +97,10 @@ def version_parser() -> ParserElement:
 
 def headers_parser() -> ParserElement:
     segment = Word(alphanums + "-_/*.")
-    segment_with_colon = Word(alphanums + "-_/*.:")
 
-    key_val_parser = Group(segment + Suppress(Literal(": ")) + segment_with_colon)
+    # need to use custome line_end because no support for CRLF
+    line_end = Suppress(Combine(Literal("\r") + Literal("\n")))
+    key_val_parser = Group(segment + Suppress(Literal(": ")) + SkipTo(line_end))
     return DelimitedList(
         key_val_parser, LineEnd(), allow_trailing_delim=True
     ).set_results_name("headers")

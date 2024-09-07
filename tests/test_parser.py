@@ -70,14 +70,15 @@ def test_version_parser():
 
 def test_headers_parser():
     h_parser = headers_parser()
-    msg = "\r\nHost: localhost:4221\r\nUser-Agent: curl/8.9.1\r\nAccept: */*\r\n"
+    msg = "\r\nHost: localhost:4221\r\nUser-Agent: curl/8.9.1\r\nAccept: */*\r\nAccept-Encoding: gzip, other\r\n"
     result = h_parser.parse_string(msg)
-    assert len(result) == 3
+    print(result)
+    assert len(result) == 4
     res = dict(result.as_dict()["headers"])
-    print(res)
     assert res["Host"] == "localhost:4221"
     assert res["User-Agent"] == "curl/8.9.1"
     assert res["Accept"] == "*/*"
+    assert res["Accept-Encoding"] == "gzip, other"
 
 
 def test_body_parser():
