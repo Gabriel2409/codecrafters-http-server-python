@@ -178,14 +178,17 @@ class HttpResponse:
         status: HttpStatus = HttpStatus.Ok200,
         content: str = "",
         content_type: str = "text/plain",
+        content_encoding: str | None = None,
     ) -> Self:
         content_len = len(content)
         body = HttpBody(content)
-        print(body)
 
+        headers = {"Content-Type": content_type, "Content-Length": str(content_len)}
+        if content_encoding == "gzip":
+            headers["Content-Encoding"] = "gzip"
         return cls(
             version=version,
             status=status,
-            headers={"Content-Type": content_type, "Content-Length": str(content_len)},
+            headers=headers,
             body=body,
         )

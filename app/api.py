@@ -13,16 +13,31 @@ def handle_req(req: HttpRequest, directory: str | None) -> HttpResponse:
 
 
 def handle_get_req(req: HttpRequest, directory: str | None) -> HttpResponse:
+    accepted_encodings = req.headers.get("Accept-Encoding", "").split(",")
+
+    if "gzip" in accepted_encodings:
+        content_encoding = "gzip"
+    else:
+        content_encoding = None
+
     match req.urlpath.path:
         case "":
             res = HttpResponse.empty(status=HttpStatus.Ok200)
 
         case "user-agent":
             user_agent = req.headers.get("User-Agent", "")
-            res = HttpResponse.text_content(status=HttpStatus.Ok200, content=user_agent)
+            res = HttpResponse.text_content(
+                status=HttpStatus.Ok200,
+                content=user_agent,
+                content_encoding=content_encoding,
+            )
 
         case x if x.startswith("echo/"):
-            res = HttpResponse.text_content(status=HttpStatus.Ok200, content=x[5:])
+            res = HttpResponse.text_content(
+                status=HttpStatus.Ok200,
+                content=x[5:],
+                content_encoding=content_encoding,
+            )
         case x if x.startswith("files/"):
             if not directory:
                 res = HttpResponse.empty(status=HttpStatus.NotFound404)
@@ -37,6 +52,7 @@ def handle_get_req(req: HttpRequest, directory: str | None) -> HttpResponse:
                         status=HttpStatus.Ok200,
                         content=content,
                         content_type="application/octet-stream",
+                        content_encoding=content_encoding,
                     )
                 else:
                     res = HttpResponse.empty(status=HttpStatus.NotFound404)
