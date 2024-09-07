@@ -87,7 +87,7 @@ def main():
     # Uncomment this to pass the first stage
 
     # Multiprocessing solution ####################
-    # handle_connection_with_multiprocessing_pool()
+    handle_connection_with_multiprocessing_pool()
 
     # Multithreading naive solution ###############
     # handle_connection_with_multithreading_naive()
@@ -96,7 +96,7 @@ def main():
     # handle_connection_with_thread_pool()
 
     # Asyncio solution #########################
-    asyncio.run(handle_connection_with_asyncio())
+    # asyncio.run(handle_connection_with_asyncio())
 
 
 if __name__ == "__main__":
