@@ -72,14 +72,14 @@ def urlpath_parser() -> ParserElement:
 
     return Or(
         (
-            full_host_parser.leave_whitespace().set_results_name("host")
-            + Optional(path_parser).leave_whitespace().set_results_name("path")
-            + Optional(query_params_parser)
-            .leave_whitespace()
-            .set_results_name("query_params"),
-            Literal("*").leave_whitespace().set_results_name("host"),
+            Combine(
+                full_host_parser.set_results_name("host")
+                + Optional(path_parser).set_results_name("path")
+                + Optional(query_params_parser).set_results_name("query_params")
+            ),
+            Literal("*").set_results_name("host"),
         )
-    )
+    ) + FollowedBy(WordEnd())
 
 
 def version_parser() -> ParserElement:

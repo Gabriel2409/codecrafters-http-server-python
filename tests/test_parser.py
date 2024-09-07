@@ -69,7 +69,6 @@ Host: localhost:4221
 User-Agent: curl/8.9.1
 Accept: */*
     """
-    msg = "GET /a HTTP/1.1"
     result = comb_parser.parse_string(msg).as_dict()
     print(result)
     print()

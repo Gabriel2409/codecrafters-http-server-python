@@ -1,2 +1,0 @@
-class CantParseRequest(Exception):
-    pass

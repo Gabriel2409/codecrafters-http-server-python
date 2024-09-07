@@ -1,5 +1,4 @@
 from typing import Dict
-from app.errors import CantParseRequest
 from app.parser import method_parser, urlpath_parser, version_parser
 
 from enum import Enum
@@ -56,11 +55,8 @@ class HttpRequest:
 
         request_line = method_parser() + urlpath_parser() + version_parser()
         try:
-            print(msg)
-
             result = request_line.parse_string(msg).as_dict()
         except ParseException:
-            # raise CantParseRequest
             raise
 
         try:
@@ -79,7 +75,7 @@ class HttpRequest:
             version = HttpVersion(result.get("version"))
 
         except ValueError:
-            raise CantParseRequest
+            raise
         return cls(method=method, path=urlpath, version=version)
 
 
