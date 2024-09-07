@@ -51,30 +51,32 @@ class HttpRequest:
         self.version = version
 
     @classmethod
-    def from_bytes(cls, msg: bytes):
+    def from_bytes(cls, msg_bytes: bytes):
+        msg = msg_bytes.decode()
+
         request_line = method_parser() + urlpath_parser() + version_parser()
         try:
-            result = request_line.parseString(msg.decode()).as_dict()
+            print(msg)
+
+            result = request_line.parse_string(msg).as_dict()
         except ParseException:
+            # raise CantParseRequest
             raise
-            raise CantParseRequest
 
         try:
-            method = HttpMethod(result.method)
+            method = HttpMethod(result.get("method"))
 
-            query_params = {}
-            if "query_params" in result:
-                for query_param in result["query_params"]:
-                    key, val = query_param.split("=")
-                    query_params[key] = val
+            path = result.get("path", "")
+            host = result.get("host")
+            query_params = dict(result.get("query_params") or {})
 
             urlpath = HttpUrlPath(
-                host=result.get("host"),
-                path=result.get("path") or "",
+                host=host,
+                path=path,
                 query_params=query_params,
             )
 
-            version = HttpVersion(result.http_version)
+            version = HttpVersion(result.get("version"))
 
         except ValueError:
             raise CantParseRequest

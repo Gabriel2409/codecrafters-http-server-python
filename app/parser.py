@@ -1,7 +1,10 @@
 from pyparsing import (
     Combine,
     DelimitedList,
+    Dict,
     FollowedBy,
+    Group,
+    OneOrMore,
     Or,
     ParserElement,
     Word,
@@ -10,6 +13,9 @@ from pyparsing import (
     Optional,
     Regex,
     Suppress,
+    ZeroOrMore,
+    alphanums,
+    alphas,
     nums,
 )
 
@@ -35,9 +41,13 @@ def urlpath_parser() -> ParserElement:
     If using a as_dict after parsing string, will return the `host` (if provided), the
     `path` (without first training slash) as well as the `query_params` in a dict
     """
+    segment = Word(alphanums + "-_")
+    dot = Literal(".")
+    slash = Literal("/")
+    tld = Word(alphas, min=2, max=6)
 
     http_parser = Literal("http") + Optional(Literal("s")) + Literal("://")
-    host_parser = Regex(r"(([a-zA-Z0-9_-])+\.)+[a-z]{2,6}")
+    host_parser = Combine(OneOrMore(segment + dot) + tld)
     port_parser = Literal(":") + Word(nums)
     full_host_parser = Combine(
         (
@@ -45,29 +55,31 @@ def urlpath_parser() -> ParserElement:
                 Suppress(http_parser)
                 + host_parser
                 + Optional(port_parser)
-                + Suppress(Optional(Literal("/")))
+                + Suppress(Optional(slash))
             )
-            | Suppress(Literal("/"))
+            | Suppress(slash)
         )
     )
-
     path_parser = Combine(
-        Regex(r"(([a-zA-Z0-9_-])+/)+[a-zA-Z0-9_-]") + Suppress(Optional(Literal("/")))
+        segment + ZeroOrMore(slash + segment) + Suppress(Optional(slash))
     )
 
-    key_val_parser = Regex(r"(([a-zA-Z0-9_-])+=([a-zA-Z0-9_-])+)")
-    query_params_parser = Suppress(Literal("?")) + DelimitedList(
-        key_val_parser, delim="&", allow_trailing_delim=False
+    key_val_parser = Group(segment + Suppress(Literal("=")) + segment)
+
+    query_params_parser = Suppress(Literal("?")) + Dict(
+        DelimitedList(key_val_parser, delim="&", allow_trailing_delim=False)
     )
 
     return Or(
         (
-            full_host_parser.set_results_name("host")
-            + Optional(path_parser).set_results_name("path")
-            + Optional(query_params_parser).set_results_name("query_params"),
-            Literal("*").set_results_name("host"),
+            full_host_parser.leave_whitespace().set_results_name("host")
+            + Optional(path_parser).leave_whitespace().set_results_name("path")
+            + Optional(query_params_parser)
+            .leave_whitespace()
+            .set_results_name("query_params"),
+            Literal("*").leave_whitespace().set_results_name("host"),
         )
-    ) + FollowedBy(WordEnd())
+    )
 
 
 def version_parser() -> ParserElement:
