@@ -1,62 +1,11 @@
+import asyncio
 import multiprocessing
 import socket
 import threading
 from concurrent.futures import ThreadPoolExecutor
-import asyncio
 
-from app.http import HttpRequest, HttpResponse, HttpStatus, HttpVersion, HttpMethod
-
-
-def receive_msg(conn: socket.socket, buf_len: int = 1024):
-    chunks = []
-
-    try:
-        while True:
-            chunk = conn.recv(buf_len)
-            if not chunk:
-                break
-            chunks.append(chunk)
-            if len(chunk) < buf_len:
-                break
-    except socket.error as e:
-        print(f"Socket error while receiving: {e}")
-
-    return b"".join(chunks)
-
-
-def send_msg(conn: socket.socket, msg: bytes):
-    total_sent = 0
-    msg_len = len(msg)
-
-    try:
-        while total_sent < msg_len:
-            sent = conn.send(msg[total_sent:])
-            total_sent += sent
-    except socket.error as e:
-        print(f"Socket error while sending: {e}")
-
-
-def handle_connection(conn: socket.socket):
-    with conn:
-        msg = receive_msg(conn=conn)
-        req = HttpRequest.from_bytes(msg)
-
-        match req.urlpath.path:
-            case "":
-                res = HttpResponse.empty(status=HttpStatus.Ok200)
-
-            case "user-agent":
-                user_agent = req.headers.get("User-Agent", "")
-                res = HttpResponse.text_content(
-                    status=HttpStatus.Ok200, content=user_agent
-                )
-
-            case x if x.startswith("echo/"):
-                res = HttpResponse.text_content(status=HttpStatus.Ok200, content=x[5:])
-            case _:
-                res = HttpResponse.empty(status=HttpStatus.NotFound404)
-
-        send_msg(conn=conn, msg=res.to_bytes())
+from app.connection_async import handle_connection_async
+from app.connection_sync import handle_connection
 
 
 def handle_connection_with_multiprocessing_pool():
@@ -107,26 +56,16 @@ def handle_connection_with_thread_pool():
         print("Shutting down")
 
 
-# Wrapper to run synchronous function in an executor
-async def handle_connection_async(reader, writer, semaphore):
-    async with semaphore:
-        loop = asyncio.get_event_loop()
-        conn = writer.transport.get_extra_info("socket")
-
-        # Run the synchronous function in a separate thread
-        await loop.run_in_executor(None, handle_connection, conn)
-
-        writer.close()
-        await writer.wait_closed()
-
-
 async def handle_connection_with_asyncio():
     """uses asyncio to handle the connections"""
-    max_connections = 4
-    semaphore = asyncio.Semaphore(max_connections)
+    # Set up the async server
     server = await asyncio.start_server(
-        lambda r, w: handle_connection_async(r, w, semaphore), "localhost", 4221
+        client_connected_cb=handle_connection_async,
+        host="localhost",
+        port=4221,
+        reuse_port=True,
     )
+
     async with server:
         print("Server listening on port 4221...")
         await server.serve_forever()
@@ -148,7 +87,7 @@ def main():
     # handle_connection_with_thread_pool()
 
     # Asyncio solution #########################
-    # asyncio.run(handle_connection_with_asyncio())
+    asyncio.run(handle_connection_with_asyncio())
 
 
 if __name__ == "__main__":
