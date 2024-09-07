@@ -14,9 +14,9 @@ venv:
 sync:
 	uv pip sync requirements.txt
 run:
-	uv run -- python -m app.main
+	uv run -- python -m app.main --directory /tmp/
 watch: 
-	uv run -- watchmedo auto-restart -p '*.py' -R  -- python -m app.main
+	uv run -- watchmedo auto-restart -p '*.py' -R  -- python -m app.main --directory /tmp/
 test: 
 	uv run -- pytest -rA
 

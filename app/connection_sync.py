@@ -32,10 +32,10 @@ def send_msg(conn: socket.socket, msg: bytes):
         print(f"Socket error while sending: {e}")
 
 
-def handle_connection(conn: socket.socket):
+def handle_connection(conn: socket.socket, directory: str | None):
     """Synchronous way to handle one connection"""
     with conn:
         msg = receive_msg(conn=conn)
         req = HttpRequest.from_bytes(msg)
-        res = handle_req(req)
+        res = handle_req(req, directory=directory)
         send_msg(conn=conn, msg=res.to_bytes())

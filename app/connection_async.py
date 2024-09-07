@@ -24,13 +24,13 @@ async def send_msg_async(writer: asyncio.StreamWriter, msg: bytes):
 
 
 async def handle_connection_async(
-    reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter, directory: str | None
 ):
     """Synchronous way to handle one connection"""
 
     msg = await receive_msg_async(reader)
     req = HttpRequest.from_bytes(msg)
-    res = handle_req(req)
+    res = handle_req(req, directory=directory)
     await send_msg_async(writer, msg=res.to_bytes())
     writer.close()
     await writer.wait_closed()
