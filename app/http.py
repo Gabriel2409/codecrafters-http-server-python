@@ -1,5 +1,11 @@
 from typing import Dict, Self
-from app.parser import method_parser, urlpath_parser, version_parser, headers_parser
+from app.parser import (
+    body_parser,
+    method_parser,
+    urlpath_parser,
+    version_parser,
+    headers_parser,
+)
 
 from enum import Enum
 from pyparsing import (
@@ -30,6 +36,7 @@ class HttpStatus(Enum):
     Ok200 = "200 OK"
     NotFound404 = "404 Not Found"
     Created201 = "201 Created"
+    Conflict409 = "409 Conflict"
     InternalServerError500 = "500 Internal Server Error"
 
 
@@ -54,11 +61,13 @@ class HttpRequest:
         urlpath: HttpUrlPath,
         version: HttpVersion,
         headers: HttpHeaders,
+        body: HttpBody,
     ):
         self.method = method
         self.urlpath = urlpath
         self.version = version
         self.headers = headers
+        self.body = body
 
     @classmethod
     def from_bytes(cls, msg_bytes: bytes):
@@ -69,6 +78,7 @@ class HttpRequest:
             + urlpath_parser()
             + version_parser()
             + Optional(headers_parser())
+            + Optional(body_parser())
         )
         try:
             result = request_line.parse_string(msg).as_dict()
@@ -93,11 +103,14 @@ class HttpRequest:
 
             # \r\n
 
-            headers = HttpHeaders(result.get("headers") or {})
+            headers = HttpHeaders(result.get("headers", {}))
+            body = HttpBody(result.get("body", ""))
 
         except ValueError:
             raise
-        return cls(method=method, urlpath=urlpath, version=version, headers=headers)
+        return cls(
+            method=method, urlpath=urlpath, version=version, headers=headers, body=body
+        )
 
     def __repr__(self):
         return (

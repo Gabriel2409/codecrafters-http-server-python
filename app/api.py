@@ -1,8 +1,18 @@
-from app.http import HttpRequest, HttpResponse, HttpStatus
+from app.http import HttpMethod, HttpRequest, HttpResponse, HttpStatus
 import pathlib
 
 
 def handle_req(req: HttpRequest, directory: str | None) -> HttpResponse:
+    match req.method:
+        case HttpMethod.GET:
+            return handle_get_req(req, directory)
+        case HttpMethod.POST:
+            return handle_post_req(req, directory)
+        case _:
+            return HttpResponse.empty(status=HttpStatus.NotFound404)
+
+
+def handle_get_req(req: HttpRequest, directory: str | None) -> HttpResponse:
     match req.urlpath.path:
         case "":
             res = HttpResponse.empty(status=HttpStatus.Ok200)
@@ -30,6 +40,28 @@ def handle_req(req: HttpRequest, directory: str | None) -> HttpResponse:
                     )
                 else:
                     res = HttpResponse.empty(status=HttpStatus.NotFound404)
+
+        case _:
+            res = HttpResponse.empty(status=HttpStatus.NotFound404)
+    return res
+
+
+def handle_post_req(req: HttpRequest, directory: str | None) -> HttpResponse:
+    match req.urlpath.path:
+        case x if x.startswith("files/"):
+            if not directory:
+                res = HttpResponse.empty(status=HttpStatus.NotFound404)
+            else:
+                filename = x[6:]
+                dirpath = pathlib.Path(directory)
+                filepath = dirpath / filename
+                if filepath.exists():
+                    res = HttpResponse.empty(status=HttpStatus.Conflict409)
+                else:
+                    with open(filepath, "w") as f:
+                        f.write(req.body)
+
+                    res = HttpResponse.empty(status=HttpStatus.Created201)
 
         case _:
             res = HttpResponse.empty(status=HttpStatus.NotFound404)

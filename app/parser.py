@@ -8,6 +8,7 @@ from pyparsing import (
     OneOrMore,
     Or,
     ParserElement,
+    SkipTo,
     Word,
     WordEnd,
     Literal,
@@ -18,6 +19,8 @@ from pyparsing import (
     alphanums,
     alphas,
     nums,
+    printables,
+    rest_of_line,
 )
 
 
@@ -100,3 +103,7 @@ def headers_parser() -> ParserElement:
     return DelimitedList(
         key_val_parser, LineEnd(), allow_trailing_delim=True
     ).set_results_name("headers")
+
+
+def body_parser() -> ParserElement:
+    return Word(printables + " ").set_results_name("body")
