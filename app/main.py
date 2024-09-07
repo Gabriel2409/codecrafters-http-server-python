@@ -44,19 +44,13 @@ def main():
             conn, address = server_socket.accept()
             with conn:
                 msg = receive_msg(conn=conn)
-                print(msg.decode())
                 req = HttpRequest.from_bytes(msg)
-                print(req.path)
 
                 match req.path:
                     case "/":
-                        res = HttpResponse(
-                            version=HttpVersion.V1_1, status=HttpStatus.Ok200
-                        )
+                        res = HttpResponse.empty(status=HttpStatus.Ok200)
                     case _:
-                        res = HttpResponse(
-                            version=HttpVersion.V1_1, status=HttpStatus.NotFound404
-                        )
+                        res = HttpResponse.empty(status=HttpStatus.NotFound404)
 
                 send_msg(conn=conn, msg=res.to_bytes())
 

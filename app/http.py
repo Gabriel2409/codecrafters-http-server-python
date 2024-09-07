@@ -1,5 +1,5 @@
-from typing import Dict
-from app.parser import method_parser, urlpath_parser, version_parser
+from typing import Dict, Self
+from app.parser import method_parser, urlpath_parser, version_parser, headers_parser
 
 from enum import Enum
 from pyparsing import (
@@ -43,17 +43,29 @@ class HttpUrlPath:
         return f"{self.__class__.__name__}(host={self.host}, path={self.path}, query_params={self.query_params})"
 
 
+HttpHeaders = dict
+
+
 class HttpRequest:
-    def __init__(self, method: HttpMethod, path: HttpUrlPath, version: HttpVersion):
+    def __init__(
+        self,
+        method: HttpMethod,
+        path: HttpUrlPath,
+        version: HttpVersion,
+        headers: HttpHeaders,
+    ):
         self.method = method
         self.path = path
         self.version = version
+        self.headers = headers
 
     @classmethod
     def from_bytes(cls, msg_bytes: bytes):
         msg = msg_bytes.decode()
 
-        request_line = method_parser() + urlpath_parser() + version_parser()
+        request_line = (
+            method_parser() + urlpath_parser() + version_parser() + headers_parser()
+        )
         try:
             result = request_line.parse_string(msg).as_dict()
         except ParseException:
@@ -74,18 +86,50 @@ class HttpRequest:
 
             version = HttpVersion(result.get("version"))
 
+            # \r\n
+
+            headers = HttpHeaders(result.get("headers") or {})
+
         except ValueError:
             raise
-        return cls(method=method, path=urlpath, version=version)
+        return cls(method=method, path=urlpath, version=version, headers=headers)
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"method={self.method},"
+            f"path={self.path},"
+            f"version={self.version},"
+            f"headers={self.headers},"
+            ")"
+        )
 
 
 class HttpResponse:
-    def __init__(self, version: HttpVersion, status: HttpStatus):
+    def __init__(self, version: HttpVersion, status: HttpStatus, headers: HttpHeaders):
         self.version = version
         self.status = status
+        self.headers = headers
 
     def to_bytes(self) -> bytes:
         res = f"{self.version.value} {self.status.value}\r\n"
 
+        for key, val in self.headers.items():
+            res += f"{key}:{val}\r\n"
+
+        res += "\r\n"
+
         res += "Content-Length:0\r\n\r\n"
         return res.encode()
+
+    @classmethod
+    def empty(
+        cls,
+        version: HttpVersion = HttpVersion.V1_0,
+        status: HttpStatus = HttpStatus.Ok200,
+    ) -> Self:
+        return cls(
+            version=version,
+            status=status,
+            headers={"Content-Length": "0"},
+        )

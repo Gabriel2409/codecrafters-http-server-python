@@ -4,6 +4,7 @@ from pyparsing import (
     Dict,
     FollowedBy,
     Group,
+    LineEnd,
     OneOrMore,
     Or,
     ParserElement,
@@ -89,3 +90,13 @@ def version_parser() -> ParserElement:
         + (Literal("1.0") | Literal("1.1") | Literal("2.0"))
         + FollowedBy(WordEnd())
     ).set_results_name("version")
+
+
+def headers_parser() -> ParserElement:
+    segment = Word(alphanums + "-_/*.")
+    segment_with_colon = Word(alphanums + "-_/*.:")
+
+    key_val_parser = Group(segment + Suppress(Literal(": ")) + segment_with_colon)
+    return DelimitedList(
+        key_val_parser, LineEnd(), allow_trailing_delim=True
+    ).set_results_name("headers")

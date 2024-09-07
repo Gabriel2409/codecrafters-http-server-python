@@ -1,7 +1,7 @@
 from pyparsing import ParseException, Word, alphas
 import pytest
 from app.http import HttpMethod, HttpUrlPath, HttpVersion
-from app.parser import method_parser, version_parser, urlpath_parser
+from app.parser import headers_parser, method_parser, version_parser, urlpath_parser
 
 
 def test_method_parser():
@@ -62,6 +62,18 @@ def test_version_parser():
             v_parser.parse_string(msg)
 
 
+def test_headers_parser():
+    h_parser = headers_parser()
+    msg = "Host: localhost:4221\r\nUser-Agent: curl/8.9.1\r\nAccept: */*\r\n"
+    result = h_parser.parse_string(msg)
+    assert len(result) == 3
+    res = dict(result.as_dict()["headers"])
+    print(res)
+    assert res["Host"] == "localhost:4221"
+    assert res["User-Agent"] == "curl/8.9.1"
+    assert res["Accept"] == "*/*"
+
+
 def test_combination_parser():
     comb_parser = method_parser() + urlpath_parser() + version_parser()
     msg = """GET / HTTP/1.1
@@ -69,6 +81,7 @@ Host: localhost:4221
 User-Agent: curl/8.9.1
 Accept: */*
     """
+    msg = msg.replace("\n", "\r\n")
     result = comb_parser.parse_string(msg).as_dict()
     print(result)
     print()
